@@ -74,5 +74,7 @@ document.getElementById("submit").onclick=function(){
  })
  .catch(function(){se.textContent="Connection problem. Please check your internet and try again.";se.style.display="block";resetBtn(btn);});
 };
+
+(function(){if(Date.now()>=Date.parse("2026-12-01T00:00:00+04:00")){document.getElementById("survey").innerHTML='<h1>THE UBE TASTE TEST HAS ENDED</h1><p>Salamat for your interest, Kabayan! Our new ube lineup is now on the menu at ChicBoy Inasal. See you soon!</p>';}})();
 </script>
 </body></html>
