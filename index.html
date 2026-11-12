@@ -64,8 +64,8 @@ document.getElementById("submit").onclick=function(){
  if(bad.length){document.getElementById(bad[0]).scrollIntoView({behavior:"smooth",block:"center"});return;}
  var btn=this;btn.disabled=true;btn.textContent="PLEASE WAIT...";var se=document.getElementById("servererr");se.style.display="none";
  var payload={rating:state.rating,feedback:document.getElementById("feedback").value,buy:state.buy,price:state.price,name:name,phone:phone,consent:true,optin:document.getElementById("optin").checked};
- fetch(API,{method:"POST",credentials:"omit",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
- .then(function(r){return r.json();})
+ function send(){return fetch(API,{method:"POST",credentials:"omit",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}).then(function(r){return r.json();});}
+ send().catch(function(){return new Promise(function(res){setTimeout(res,2000);}).then(send);})
  .then(function(r){
   if(r.error){se.textContent=r.error;se.style.display="block";resetBtn(btn);return;}
   document.getElementById("code").textContent=r.code;
