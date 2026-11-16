@@ -50,6 +50,7 @@ body{background:var(--off)} main{padding-top:20px}
 <main>
 <div id="slot" class="msg"><p>Loading your card...</p></div>
 <div id="after" style="display:none">
+<button class="btn" id="saveimg" type="button">SAVE CARD AS IMAGE</button>
 <p class="tip">Show this screen at the ChicBoy counter. Turn your screen brightness up so the barcode scans easily.</p>
 <div id="terms"></div>
 <p class="terms" style="text-align:center">Questions? WhatsApp ChicBoy Inasal at <b>058 942 1946</b>.</p>
@@ -111,6 +112,52 @@ var TERMS_HTML = '<p class="terms" style="margin:0"><b>How it works</b></p><ul c
   '<li>The Inasal Lunch Bowl and Seafood Lunch Bowl are only for card holders. They are already priced for mall staff, so the 20% does not apply to them.</li>' +
   '<li>Personal card: for your own meal only. Please carry your mall staff ID. We may ask to see it.</li>' +
   '<li>Cannot be combined with other offers. ChicBoy Inasal may cancel cards that are shared or misused.</li></ul>';
+
+// ---- Save the card as an image (PNG) ----
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function loadImg(src) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
+function cardImage(d) {
+  var F = '"Bricolage Grotesque", system-ui, sans-serif';
+  var ready = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load('800 40px "Bricolage Grotesque"'), document.fonts.load('400 20px "Bricolage Grotesque"')]).catch(function () {}) : Promise.resolve();
+  var logoSrc = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(LOGO_SVG.replace("<svg ", '<svg width="1040" height="379" '));
+  return ready.then(function () { return loadImg(logoSrc); }).then(function (logo) {
+    var W = 1200, H = 760, c = document.createElement("canvas"); c.width = W; c.height = H; var x = c.getContext("2d");
+    x.fillStyle = "#fffdf7"; x.fillRect(0, 0, W, H);
+    x.save(); rr(x, 0, 0, W, H, 56); x.clip();
+    x.fillStyle = "#da281c"; x.fillRect(0, 0, W, H);
+    x.fillStyle = "#ffc72d"; x.beginPath(); x.arc(W - 40, -10, 230, 0, Math.PI * 2); x.fill();
+    x.restore();
+    x.drawImage(logo, 54, 44, 330, 120);
+    x.fillStyle = "#5d3502"; rr(x, W - 400, 60, 340, 64, 32); x.fill();
+    x.fillStyle = "#ffc72d"; x.font = "800 30px " + F; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("MALL STAFF CARD", W - 230, 93);
+    x.textAlign = "left"; x.textBaseline = "alphabetic"; x.fillStyle = "#fffdf7";
+    x.font = "800 112px " + F; x.fillText("20% OFF", 54, 290);
+    var w20 = x.measureText("20% OFF").width; x.font = "600 40px " + F; x.fillText("dine-in", 54 + w20 + 20, 290);
+    x.font = "800 56px " + F; var nm = String(d.name || ""); while (x.measureText(nm).width > W - 110 && nm.length > 3) nm = nm.slice(0, -2) + "…"; x.fillText(nm, 54, 372);
+    x.font = "400 34px " + F; x.fillText(String(d.company || "") + " · " + (MALL_SHORT[d.mall] || d.mall), 54, 418);
+    x.fillStyle = "#ffffff"; rr(x, 54, 448, W - 108, 230, 32); x.fill();
+    var bc = document.createElement("canvas");
+    try { JsBarcode(bc, d.code, { format: "CODE128", displayValue: false, margin: 0, height: 140, width: 5, lineColor: "#000", background: "#fff" }); } catch (e) {}
+    var bw = Math.min(bc.width, W - 220); x.drawImage(bc, (W - bw) / 2, 470, bw, 140);
+    x.fillStyle = "#5d3502"; x.font = "800 46px " + F; x.textAlign = "center"; x.fillText(String(d.code).split("").join(" "), W / 2, 660);
+    x.textAlign = "left"; x.fillStyle = "#fffdf7"; x.font = "400 28px " + F; x.fillText("Valid until " + fmtDate(d.valid_until), 54, 724);
+    x.textAlign = "right"; x.fillText("Personal card · ChicBoy Inasal", W - 54, 724);
+    return new Promise(function (res) { c.toBlob(res, "image/png"); });
+  });
+}
+function saveCardImage(d, btn) {
+  var old = btn ? btn.textContent : ""; if (btn) { btn.disabled = true; btn.textContent = "MAKING YOUR CARD..."; }
+  cardImage(d).then(function (blob) {
+    var name = "ChicBoy-Staff-Card-" + d.code + ".png";
+    var file = null; try { file = new File([blob], name, { type: "image/png" }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: "My ChicBoy Mall Staff Card" }).catch(function () {});
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }).catch(function () { alert("Sorry, could not make the image. Please take a screenshot instead."); })
+    .then(function () { if (btn) { btn.disabled = false; btn.textContent = old; } });
+}
 </script>
 <script>
 (function () {
@@ -125,6 +172,7 @@ var TERMS_HTML = '<p class="terms" style="margin:0"><b>How it works</b></p><ul c
     if (d.status === "blocked") { slot.insertAdjacentHTML("beforeend", '<div class="msg"><h1>CARD NOT ACTIVE</h1><p>This card has been cancelled. Please message us at 058 942 1946.</p></div>'); return; }
     drawBarcode(d.code);
     document.getElementById("terms").innerHTML = TERMS_HTML;
+    document.getElementById("saveimg").onclick = function () { saveCardImage(d, this); };
     document.getElementById("after").style.display = "block";
   }).catch(function () { fail("NO CONNECTION", "Please check your internet and open this page again."); });
 })();
