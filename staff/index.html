@@ -54,14 +54,14 @@ input:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--yellow)
 <li><b>20% off</b> dine-in, every day</li>
 <li>Our <b>Inasal Lunch Bowl</b> and <b>Seafood Lunch Bowl</b>, made only for mall staff</li>
 </ul>
-<p class="terms">It takes 1 minute. Your card appears on this screen and we also send it to your WhatsApp.</p>
+<p class="terms">It takes 1 minute. Your card appears on this screen and we also send it to your WhatsApp. One card per person, for staff of these 4 malls only.</p>
 
 <section class="q" id="q-name"><h2>Full name <span class="req">*</span></h2><p class="help">As on your mall staff ID.</p><input type="text" id="name" maxlength="80" autocomplete="name"><p class="err">Please enter your full name.</p></section>
 <section class="q" id="q-phone"><h2>WhatsApp number <span class="req">*</span></h2><p class="help">UAE mobile, e.g. 0501234567. One card per number.</p><input type="tel" id="phone" inputmode="tel" autocomplete="tel" maxlength="16"><p class="err">Please enter a UAE mobile number, e.g. 0501234567.</p></section>
 <section class="q" id="q-mall"><h2>Which mall do you work in? <span class="req">*</span></h2><div class="pills" data-name="mall"><button type="button" class="pill" data-v="Deira City Centre">Deira City Centre</button><button type="button" class="pill" data-v="Wafi Mall">Wafi Mall</button><button type="button" class="pill" data-v="Khalidiyah Mall">Khalidiyah Mall</button><button type="button" class="pill" data-v="Manar Mall (RAK)">Manar Mall (RAK)</button></div><p class="err">Please choose your mall.</p></section>
 <section class="q" id="q-company"><h2>Company or shop name <span class="req">*</span></h2><p class="help">e.g. Carrefour, Zara, mall security, mall management.</p><input type="text" id="company" maxlength="80" autocomplete="organization"><p class="err">Please enter your company or shop.</p></section>
 <section class="q" id="q-position"><h2>Position <span class="req">*</span></h2><p class="help">e.g. Sales Associate, Cashier, Supervisor.</p><input type="text" id="position" maxlength="60" autocomplete="organization-title"><p class="err">Please enter your position.</p></section>
-<section class="q" id="q-consent"><label class="chk"><input type="checkbox" id="consent"><span>I work at one of these malls. I agree that ChicBoy Inasal may keep my details to run my staff card and check its use. <span class="req">*</span></span></label><label class="chk"><input type="checkbox" id="optin" checked><span>Send my card and ChicBoy staff offers to my WhatsApp.</span></label><p class="err">Please tick the first box to get your card.</p></section>
+<section class="q" id="q-consent"><label class="chk"><input type="checkbox" id="consent"><span>I work at one of these malls. I agree that ChicBoy Inasal may keep my details to run my staff card, send it to my WhatsApp and check its use. <span class="req">*</span></span></label><label class="chk"><input type="checkbox" id="optin"><span>Also send me ChicBoy staff offers on WhatsApp.</span></label><p class="err">Please tick the first box to get your card.</p></section>
 <button class="btn" id="submit" type="button">GET MY STAFF CARD</button><p class="err" id="servererr" style="text-align:center"></p>
 </div>
 
@@ -106,7 +106,7 @@ function fmtDate(iso) {
 var MALL_SHORT = { "Deira City Centre": "Deira City Centre", "Wafi Mall": "Wafi Mall", "Khalidiyah Mall": "Khalidiyah Mall", "Manar Mall (RAK)": "Manar Mall, RAK" };
 
 function cardHTML(d) {
-  return '<div class="card' + (d.status === "blocked" ? " blocked" : "") + '" id="staffcard">' +
+  return '<div class="card' + (d.status === "blocked" || d.status === "expired" ? " blocked" : "") + '" id="staffcard">' +
     '<div class="top">' + LOGO_SVG + '<span class="tag">MALL STAFF CARD</span></div>' +
     '<div class="off">20% OFF <small>dine-in</small></div>' +
     '<div class="who"><div class="nm">' + esc(d.name) + '</div><div class="co">' + esc(d.company) + ' &middot; ' + esc(MALL_SHORT[d.mall] || d.mall) + '</div></div>' +
@@ -174,6 +174,8 @@ document.getElementById("submit").onclick = function () {
       } else if (r.status === "invalid") {
         var id = "q-" + r.field; var el = document.getElementById(id); if (el) { el.classList.add("bad"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
         resetBtn(btn);
+      } else if (r.status === "busy") {
+        se.textContent = "Lots of people are signing up right now. Please try again in a few minutes."; se.style.display = "block"; resetBtn(btn);
       } else if (r.status === "no_codes") {
         showOther("<h1>ALMOST THERE</h1><p>We are adding more staff cards right now. Please try again tomorrow. Salamat!</p>");
       } else {

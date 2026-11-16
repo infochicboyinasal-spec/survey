@@ -84,7 +84,7 @@ function fmtDate(iso) {
 var MALL_SHORT = { "Deira City Centre": "Deira City Centre", "Wafi Mall": "Wafi Mall", "Khalidiyah Mall": "Khalidiyah Mall", "Manar Mall (RAK)": "Manar Mall, RAK" };
 
 function cardHTML(d) {
-  return '<div class="card' + (d.status === "blocked" ? " blocked" : "") + '" id="staffcard">' +
+  return '<div class="card' + (d.status === "blocked" || d.status === "expired" ? " blocked" : "") + '" id="staffcard">' +
     '<div class="top">' + LOGO_SVG + '<span class="tag">MALL STAFF CARD</span></div>' +
     '<div class="off">20% OFF <small>dine-in</small></div>' +
     '<div class="who"><div class="nm">' + esc(d.name) + '</div><div class="co">' + esc(d.company) + ' &middot; ' + esc(MALL_SHORT[d.mall] || d.mall) + '</div></div>' +
@@ -121,6 +121,7 @@ var TERMS_HTML = '<p class="terms" style="margin:0"><b>How it works</b></p><ul c
   rpc("member_card", { p_token: t }).then(function (d) {
     if (d.status === "not_found") { fail("CARD NOT FOUND", "Please open the link we sent you on WhatsApp, or message us at 058 942 1946."); return; }
     slot.className = ""; slot.innerHTML = cardHTML(d);
+    if (d.status === "expired") { slot.insertAdjacentHTML("beforeend", '<div class="msg"><h1>CARD EXPIRED</h1><p>This card ended on ' + fmtDate(d.valid_until) + '. We will send you a renewal link on WhatsApp, or message us at 058 942 1946.</p></div>'); return; }
     if (d.status === "blocked") { slot.insertAdjacentHTML("beforeend", '<div class="msg"><h1>CARD NOT ACTIVE</h1><p>This card has been cancelled. Please message us at 058 942 1946.</p></div>'); return; }
     drawBarcode(d.code);
     document.getElementById("terms").innerHTML = TERMS_HTML;
